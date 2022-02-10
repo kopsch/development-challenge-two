@@ -1,7 +1,11 @@
 export interface IPatient {
-    name: string;
-    birthdate: string;
-    email: string;
-    address: string;
-    id?: string;
+  nome?: string;
+  data_de_nascimento?: string;
+  email?: string;
+  endereco?: string;
+  id?: string;
+}
+
+export interface IdData {
+  id?: string | boolean;
 }
