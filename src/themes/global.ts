@@ -10,6 +10,7 @@ export default createGlobalStyle`
         --gray-0: #F5F5F5;
         --white-50: rgba(255,255,255,0.05);
         --black-95:rgba(51, 51, 51, 0.95);
+        --black-50:rgba(51, 51, 51, 0.50);
     }
     *{
     margin: 0;

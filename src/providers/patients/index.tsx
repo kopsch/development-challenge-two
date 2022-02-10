@@ -7,13 +7,19 @@ import {
 } from "react";
 import api from "../../services/api";
 import { toast } from "react-toastify";
-import { IPatient } from "../../interfaces";
+import { IdData, IPatient } from "../../interfaces";
 
 interface PatientsContextData {
   patients: IPatient[];
   addPatient: (data: IPatient) => void;
-  updatePatient: (id: string, updateKey: string, updateValue: string) => void;
+  updatePatient: (data: IPatient, id: IdData) => void;
   deletePatient: (id: string) => void;
+  id: boolean | string;
+  closeId: () => void;
+  openId: (id: string) => void;
+  modalIsOpen: boolean;
+  closeModal: () => void;
+  openModal: () => void;
 }
 
 interface ProductProps {
@@ -26,6 +32,24 @@ const PatientsContext = createContext<PatientsContextData>(
 
 export const PatientsProvider = ({ children }: ProductProps) => {
   const [patients, setPatients] = useState([]);
+  const [id, setId] = useState<string | boolean>(false);
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+
+  const closeModal = () => {
+    setModalIsOpen(false);
+  };
+
+  const openModal = () => {
+    setModalIsOpen(true);
+  };
+
+  const closeId = () => {
+    setId(false);
+  };
+
+  const openId = (id: string) => {
+    setId(id);
+  };
 
   const getAllPatients = () => {
     api
@@ -38,33 +62,52 @@ export const PatientsProvider = ({ children }: ProductProps) => {
   };
 
   const addPatient = async (data: IPatient) => {
+    const id = patients.length + 1
+    const payload = {
+      ...data,
+      id: id.toString()
+    }
+
     await api
-      .post("/patient", data)
-      .then((_) => toast.success("Paciente adicionado"))
-      .catch((_) => toast.error("Algo deu errado"));
+      .post("/patient", payload)
+      .then((_) => {
+        toast.success("Paciente adicionado");
+        getAllPatients();
+        closeModal();
+      })
+      .catch((_) => {
+        toast.error("Algo deu errado");
+        closeModal();
+      });
   };
 
-  const updatePatient = async (
-    id: string,
-    updateKey: string,
-    updateValue: string
-  ) => {
-    const data = {
-      id: id,
-      updateKey: updateKey,
-      updateValue: updateValue,
-    };
-
-    await api
-      .patch("/patient", data)
-      .then((_) => toast.success("Paciente atualizado"))
-      .catch((_) => toast.error("Algo deu errado"));
+  const updatePatient = async (data: any, { id }: IdData) => {
+    Object.keys(data).map(async (key: string) => {
+      return (
+        data[key] !== "" &&
+        (await api
+          .put("/patient", {
+            id: id,
+            updateKey: key,
+            updateValue: data[key],
+          })
+          .then((_) => {
+            getAllPatients();
+          })
+          .catch((_) => console.log(_)))
+      );
+    });
+    toast.success("Usuário modificado");
+    closeId();
   };
 
   const deletePatient = async (id: string) => {
     await api
       .delete("/patient", { data: { id: id } })
-      .then((_) => toast.success("Paciente deletado"))
+      .then((_) => {
+        toast.success("Paciente deletado");
+        getAllPatients();
+      })
       .catch((_) => toast.error("Algo deu errado"));
   };
 
@@ -72,7 +115,18 @@ export const PatientsProvider = ({ children }: ProductProps) => {
 
   return (
     <PatientsContext.Provider
-      value={{ addPatient, deletePatient, patients, updatePatient }}
+      value={{
+        addPatient,
+        deletePatient,
+        patients,
+        updatePatient,
+        id,
+        openId,
+        closeId,
+        closeModal,
+        modalIsOpen,
+        openModal,
+      }}
     >
       {children}
     </PatientsContext.Provider>
